@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block body_class %}page-dashboard{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+    <aside class="sidebar">
+        <nav class="sidenav">
+            <a href="{{ url_for('dashboard') }}" class="active">Overview</a>
+            <a href="{{ url_for('tasks') }}">My Tasks</a>
+            <a href="{{ url_for('projects') }}">Projects</a>
+            <a href="#">Team</a>
+            <a href="#">Settings</a>
+        </nav>
+    </aside>
+
+    <section class="dash-main">
+        <div class="dash-header">
+            <div>
+                <h1>Overview</h1>
+                <p class="muted">Here's what's happening across your workspace.</p>
+            </div>
+            <ul class="presence-list presence-list-compact">
+                <li class="presence-item">
+                    <span class="avatar" style="--avatar-bg:#2F6F5E">AM</span>
+                    <span class="status-dot status-online" title="Amara · Online"></span>
+                </li>
+                <li class="presence-item">
+                    <span class="avatar" style="--avatar-bg:#3E5C76">JT</span>
+                    <span class="status-dot status-online" title="Jonas · Online"></span>
+                </li>
+                <li class="presence-item">
+                    <span class="avatar" style="--avatar-bg:#8A5A44">RK</span>
+                    <span class="status-dot status-away" title="Riya · Away"></span>
+                </li>
+                <li class="presence-item">
+                    <span class="avatar" style="--avatar-bg:#5B4B8A">CL</span>
+                    <span class="status-dot status-offline" title="Chen · Offline"></span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-label">Active Projects</span>
+                <span class="stat-value">{{ stats['active_projects'] }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Open Tasks</span>
+                <span class="stat-value">{{ stats['open_tasks'] }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Due This Week</span>
+                <span class="stat-value">{{ stats['due_this_week'] }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Team Members</span>
+                <span class="stat-value">{{ stats['team_members'] }}</span>
+            </div>
+        </div>
+
+        <div class="panel-grid">
+            <div class="panel">
+                <h2>Recent Tasks</h2>
+                {% if recent_tasks %}
+                <ul class="task-list">
+                    {% for task in recent_tasks %}
+                    <li class="task-item">
+                        <span class="task-status-dot status-{{ task['status'] }}" title="{{ task['status'].replace('_', ' ') }}"></span>
+                        <div class="task-item-body">
+                            <span class="task-title{% if task['status'] == 'done' %} task-title-done{% endif %}">{{ task['title'] }}</span>
+                            <span class="task-meta">
+                                {{ task['project_name'] }}
+                                {% if task['due_date'] %} · {{ task['due_date']|friendly_date }}{% endif %}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="empty-state">No tasks yet — this will populate in Stage 4.</p>
+                {% endif %}
+            </div>
+            <div class="panel">
+                <h2>Projects</h2>
+                {% if projects %}
+                <ul class="project-list">
+                    {% for project in projects %}
+                    <li class="project-item">
+                        <span class="project-dot" style="--proj-color: {{ project['color'] }}"></span>
+                        <div class="project-item-body">
+                            <span class="project-name">{{ project['name'] }}</span>
+                            <span class="project-meta">{{ project['done_count'] }}/{{ project['task_count'] }} tasks done</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="empty-state">No projects yet — this will populate in Stage 4.</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

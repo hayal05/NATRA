@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block body_class %}page-auth{% endblock %}
+
+{% block content %}
+<section class="auth-wrap">
+    <div class="auth-card">
+        <h1 class="auth-title">Create your hub</h1>
+        <p class="muted auth-sub">Set up your workspace in a minute.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="form-alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="post" class="auth-form">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required autofocus>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required minlength="8">
+            <span class="field-hint">At least 8 characters.</span>
+
+            <button type="submit" class="btn-primary btn-block">Create account</button>
+        </form>
+
+        <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block body_class %}page-landing{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-inner">
+        <span class="eyebrow">For distributed teams</span>
+        <h1>One hub for your<br>remote work.</h1>
+        <p class="hero-sub">
+            Projects, tasks, and your team's day — in one clean workspace.
+            No app-switching, no noise.
+        </p>
+        <div class="hero-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn-primary">Try the dashboard</a>
+            <a href="#features" class="btn-ghost">See how it works</a>
+        </div>
+    </div>
+
+    <div class="presence-strip" aria-label="Team presence across timezones">
+        <span class="presence-strip-label">Right now, across your team</span>
+        <ul class="presence-list">
+            <li class="presence-item">
+                <span class="avatar" style="--avatar-bg:#1B4332">AM</span>
+                <span class="status-dot status-online" title="Online"></span>
+                <span class="presence-meta"><strong>Amara</strong><em>09:14 · Lagos</em></span>
+            </li>
+            <li class="presence-item">
+                <span class="avatar" style="--avatar-bg:#3E5C76">JT</span>
+                <span class="status-dot status-online" title="Online"></span>
+                <span class="presence-meta"><strong>Jonas</strong><em>10:14 · Berlin</em></span>
+            </li>
+            <li class="presence-item">
+                <span class="avatar" style="--avatar-bg:#8A5A44">RK</span>
+                <span class="status-dot status-away" title="Away"></span>
+                <span class="presence-meta"><strong>Riya</strong><em>13:44 · Delhi</em></span>
+            </li>
+            <li class="presence-item">
+                <span class="avatar" style="--avatar-bg:#5B4B8A">CL</span>
+                <span class="status-dot status-offline" title="Offline"></span>
+                <span class="presence-meta"><strong>Chen</strong><em>23:14 · Auckland</em></span>
+            </li>
+        </ul>
+    </div>
+</section>
+
+<section id="features" class="features">
+    <div class="feature-card">
+        <div class="feature-icon">◧</div>
+        <h3>Projects</h3>
+        <p>Organize work into projects your whole team can see and track.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">✓</div>
+        <h3>Tasks</h3>
+        <p>Assign, prioritize, and move tasks forward without the clutter.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">◔</div>
+        <h3>Dashboard</h3>
+        <p>A single glance that tells you exactly where things stand.</p>
+    </div>
+</section>
+{% endblock %}
