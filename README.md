@@ -26,7 +26,7 @@ static/js/live.js   Socket.IO client — refreshes page content on live events
 
 **Option A — local file DB, no Turso account needed (fastest for dev):**
 ```
-cd remote-job-platform-flask
+cd remote-job-platform-flask-turso
 cp .env.example .env
 # edit .env: comment out TURSO_DATABASE_URL=libsql://... and TURSO_AUTH_TOKEN,
 # uncomment TURSO_DATABASE_URL=file:local.db instead
@@ -40,7 +40,7 @@ turso db create remote-job-platform
 turso db show remote-job-platform --url          # → TURSO_DATABASE_URL
 turso db tokens create remote-job-platform        # → TURSO_AUTH_TOKEN
 
-cd remote-job-platform-flask
+cd remote-job-platform-flask-turso
 cp .env.example .env
 # paste both values into .env
 ```
@@ -51,7 +51,7 @@ on first run — see `db.py`.
 ## Run it locally
 
 ```
-cd remote-job-platform-flask
+cd remote-job-platform-flask-turso
 python3 -m venv venv && source venv/bin/activate   # optional but recommended
 pip install -r requirements.txt
 # also set SECRET_KEY in .env to something random:
@@ -88,7 +88,10 @@ Single Render **Web Service** (no separate static site needed — Flask
 serves the HTML/CSS/JS itself).
 
 - **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app`
+- **Start Command:** `gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 --bind 0.0.0.0:$PORT app:app`
+  *(the `--bind 0.0.0.0:$PORT` is required — Render assigns a port via the
+  `PORT` env var, and gunicorn defaults to `127.0.0.1:8000` if you don't
+  bind to it explicitly, which makes the service unreachable)*
   *(Flask-SocketIO needs an async worker; `gevent` + `gevent-websocket` are
   already in `requirements.txt`. We use gevent rather than eventlet because
   eventlet's monkey-patching doesn't play well with Python 3.12's `logging`
@@ -102,6 +105,16 @@ serves the HTML/CSS/JS itself).
 | `TURSO_DATABASE_URL` | your Turso db URL (`libsql://your-db-your-org.turso.io`) |
 | `TURSO_AUTH_TOKEN` | your Turso auth token |
 | `PYTHON_VERSION` | `3.12.8` — pin this; some deploy targets default to a very new Python that isn't yet compatible with gevent/eventlet |
+
+Render's default health check path is `/`. If you'd rather it hit the
+dedicated `/health` endpoint, set that explicitly in the service's
+Settings → Health Check Path.
+
+`gunicorn.conf.py` (committed at the repo root) is picked up automatically
+by gunicorn — you don't need to reference it in the Start Command. It
+exists to create the Turso client in a `post_fork` hook, before gunicorn's
+gevent worker monkey-patches threading; see the comment in that file and
+in `app.py` for why the ordering matters.
 
 Using a real Turso database means there's no persistent-disk concern like
 there was with SQLite on Render's ephemeral filesystem — the data lives on
@@ -118,12 +131,15 @@ pip install gevent gevent-websocket gunicorn
 
 add all three to `requirements.txt`, then set the Render start command to:
 ```
-gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
+gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 --bind 0.0.0.0:$PORT app:app
 ```
 (Keep `-w 1` — Flask-SocketIO's in-memory broadcast doesn't share state
 across multiple worker processes. For more than one worker/instance you'd
 need a message queue backend, e.g. Redis, which Flask-SocketIO supports via
 `message_queue=`.)
+
+`gunicorn.conf.py` in this repo also matters for production — see the next
+section for why.
 
 ## Suggested next steps
 1. Add job search/filtering pagination if the board grows.

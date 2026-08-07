@@ -17,6 +17,16 @@ load_dotenv()
 # whole single-threaded hub (the failure mode we'd get with
 # patch_all(thread=False) instead — LoopExit: "this operation would block
 # forever").
+#
+# NOTE: this ordering only protects the `python app.py` path below. Under
+# the production Start Command (gunicorn + GeventWebSocketWorker), gunicorn's
+# own worker monkey-patches in init_process() BEFORE it ever imports this
+# module, so this import runs too late in that path. gunicorn.conf.py's
+# post_fork() hook is what does the equivalent job for gunicorn — it
+# imports db.py before the worker patches anything. Because Python caches
+# modules, this `import db` is then just a cheap no-op re-import under
+# gunicorn (the client was already built in post_fork), and it's the one
+# doing the real work when you run `python app.py` directly.
 import db
 
 import gevent.monkey
@@ -38,7 +48,7 @@ from routes.users import bp as users_bp
 
 def create_app():
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-before-deploying")
 
     init_db(app)
 
