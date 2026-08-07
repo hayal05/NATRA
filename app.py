@@ -1,17 +1,27 @@
-import gevent.monkey
-# thread=False: libsql_client's sync wrapper runs its own asyncio event loop
-# on a dedicated background *thread* and dispatches queries into it. If
-# gevent patches `threading` too, that background thread becomes a greenlet
-# instead of a real OS thread, its event loop never gets to run
-# independently, and every query fails with "RuntimeError: no running event
-# loop". Leaving real threading intact avoids that; gevent still patches
-# sockets/ssl/select, which is all Flask-SocketIO's gevent mode needs.
-gevent.monkey.patch_all(thread=False)
-
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Create the Turso client (and its background thread + private asyncio
+# event loop) now, BEFORE gevent monkey-patches threading. That background
+# thread must be a genuine OS thread with its own real event loop to work
+# at all — if `threading` is already patched when it's created, the thread
+# becomes a greenlet and every query fails with "RuntimeError: no running
+# event loop" the moment it tries to await anything.
+#
+# Patching *after* this import is what we actually want: it makes the
+# Condition/Future objects created per-request (when a route calls
+# db.execute()) gevent-cooperative, which is what lets that real background
+# thread hand a result back to a waiting greenlet without blocking gevent's
+# whole single-threaded hub (the failure mode we'd get with
+# patch_all(thread=False) instead — LoopExit: "this operation would block
+# forever").
+import db
+
+import gevent.monkey
+
+gevent.monkey.patch_all()
 
 from flask import Flask, g
 
