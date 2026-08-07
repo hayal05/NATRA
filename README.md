@@ -132,17 +132,20 @@ across multiple worker processes. For more than one worker/instance you'd
 need a message queue backend, e.g. Redis, which Flask-SocketIO supports via
 `message_queue=`.)
 
-**Import order matters.** `app.py` calls `gevent.monkey.patch_all()` as
-the very first thing it does, before importing `os`, `dotenv`, or `db.py`.
-Don't reorder this. An earlier version of this app imported `db.py`
-*before* patching (to give the Turso client's background thread "real" OS
-threads), which seemed reasonable but crashed in production with `Error:
-cannot release un-acquired lock` right after `patch_all()` ran — `ssl` and
-`threading` primitives had already been built unpatched by that point
-(`db.py`'s client pulls in `aiohttp`), and patching out from under them
-left locks in an inconsistent state. gevent's own guidance is the
-simpler rule: patch first, before importing anything that touches
-`ssl`/`socket`/`threading`.
+**Import order used to matter here, but doesn't anymore.** `app.py` calls
+`gevent.monkey.patch_all()` as the very first thing it does. Two earlier
+versions of `db.py` used the `libsql-client` SDK's sync wrapper, which
+runs an internal asyncio event loop in a background thread — and that
+bridge turned out to be incompatible with gevent monkey-patching in
+*both* possible orders: patch-first crashed with `RuntimeError: no
+running event loop`, patch-after-db-import crashed with `Error: cannot
+release un-acquired lock`. Both were reproduced live on Render, not just
+theorized. `db.py` now talks to Turso over plain synchronous HTTP via
+`requests` instead (Turso's `/v2/pipeline` "Hrana over HTTP" endpoint) —
+no background thread, no private event loop, nothing gevent-sensitive —
+so patch order is no longer load-bearing. It still runs first because
+that's gevent's documented default recommendation, not because anything
+here depends on it.
 
 ## Suggested next steps
 1. Add job search/filtering pagination if the board grows.

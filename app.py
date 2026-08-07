@@ -1,17 +1,12 @@
 """App factory, blueprint registration, Jinja filters.
 
-IMPORTANT: gevent.monkey.patch_all() must run before anything else is
-imported — including os, dotenv, and db. This used to be reversed (db
-imported first, to give the Turso client "real" OS threads before
-patching), on the theory that patching-after-creation would break it with
-"no running event loop". In production (Render, gunicorn +
-GeventWebSocketWorker) that ordering instead produced a *different*,
-confirmed crash: "Error: cannot release un-acquired lock", immediately
-after patch_all() ran — because ssl/aiohttp/threading primitives had
-already been constructed unpatched (via db.py's client, which pulls in
-aiohttp) before patching flipped them over. gevent's own guidance is to
-patch first, before importing anything that might touch ssl/socket/
-threading, so that's what happens here.
+gevent.monkey.patch_all() runs as the very first thing, before any other
+imports. This used to matter a lot for db.py's Turso client — see db.py's
+docstring for the two different production crashes that came from trying
+to get that ordering right (there wasn't one that worked). db.py now
+talks to Turso over plain synchronous HTTP instead, which doesn't touch
+anything gevent-sensitive, so patch order isn't load-bearing here anymore
+— patching first is just the standard, documented-safe default.
 """
 import gevent.monkey
 
