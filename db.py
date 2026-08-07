@@ -19,7 +19,17 @@ if not TURSO_DATABASE_URL:
 
 # For a purely local file DB during development, set TURSO_DATABASE_URL=file:local.db
 # and omit TURSO_AUTH_TOKEN — no Turso account needed until you want to sync/deploy.
-_client_kwargs = {"url": TURSO_DATABASE_URL}
+# libsql-client opens a WebSocket when the URL uses the libsql:// scheme.
+# Some hosts (Render included) can fail that WebSocket handshake against
+# Turso's edge ("WSServerHandshakeError: 400"). Using the https:// scheme
+# instead makes the client talk to the same database over plain HTTP,
+# which sidesteps that failure mode entirely — no functional difference
+# for the simple (non-interactive-transaction) queries this app makes.
+_connect_url = TURSO_DATABASE_URL
+if _connect_url.startswith("libsql://"):
+    _connect_url = "https://" + _connect_url[len("libsql://"):]
+
+_client_kwargs = {"url": _connect_url}
 if TURSO_AUTH_TOKEN and not TURSO_DATABASE_URL.startswith("file:"):
     _client_kwargs["auth_token"] = TURSO_AUTH_TOKEN
 
