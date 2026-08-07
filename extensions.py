@@ -1,11 +1,13 @@
 from flask_socketio import SocketIO
 
-# eventlet async_mode: required for gunicorn deployments so WebSocket
-# connections don't tie up gthread/sync worker threads indefinitely (which
-# causes gunicorn's arbiter to kill the worker on heartbeat timeout and
-# restart it — seen as the port repeatedly dropping in production logs).
-# Start command must be: gunicorn -k eventlet -w 1 app:app
-socketio = SocketIO(async_mode="eventlet", cors_allowed_origins="*")
+# gevent async_mode: eventlet has known incompatibilities with Python 3.12's
+# logging internals (gunicorn's master process creates an RLock via
+# `import logging` before any worker can monkey-patch, which eventlet can't
+# retroactively "green" — causes RLock/context errors under load). gevent
+# handles this cleanly and is Flask-SocketIO's other first-class async mode.
+# Start command must be:
+#   gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
+socketio = SocketIO(async_mode="gevent", cors_allowed_origins="*")
 
 
 def broadcast(event, data):

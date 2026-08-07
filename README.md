@@ -88,9 +88,12 @@ Single Render **Web Service** (no separate static site needed — Flask
 serves the HTML/CSS/JS itself).
 
 - **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `gunicorn -k eventlet -w 1 app:app`
-  *(Flask-SocketIO needs an async worker; add `eventlet` to
-  `requirements.txt` before deploying, or swap to `gevent` — see note below.)*
+- **Start Command:** `gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app`
+  *(Flask-SocketIO needs an async worker; `gevent` + `gevent-websocket` are
+  already in `requirements.txt`. We use gevent rather than eventlet because
+  eventlet's monkey-patching doesn't play well with Python 3.12's `logging`
+  internals under gunicorn — surfaces as "RLock(s) were not greened" /
+  "Working outside of request context" crashes.)*
 - **Environment Variables:**
 
 | Key | Value |
@@ -98,6 +101,7 @@ serves the HTML/CSS/JS itself).
 | `SECRET_KEY` | a random 64-char hex string (generate with the snippet above) — required, don't reuse the dev default |
 | `TURSO_DATABASE_URL` | your Turso db URL (`libsql://your-db-your-org.turso.io`) |
 | `TURSO_AUTH_TOKEN` | your Turso auth token |
+| `PYTHON_VERSION` | `3.12.8` — pin this; some deploy targets default to a very new Python that isn't yet compatible with gevent/eventlet |
 
 Using a real Turso database means there's no persistent-disk concern like
 there was with SQLite on Render's ephemeral filesystem — the data lives on
@@ -109,12 +113,12 @@ local dev but isn't meant for production. For Render, use Gunicorn with an
 async worker so WebSocket connections work correctly:
 
 ```
-pip install eventlet gunicorn
+pip install gevent gevent-websocket gunicorn
 ```
 
-add both to `requirements.txt`, then set the Render start command to:
+add all three to `requirements.txt`, then set the Render start command to:
 ```
-gunicorn -k eventlet -w 1 app:app
+gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
 ```
 (Keep `-w 1` — Flask-SocketIO's in-memory broadcast doesn't share state
 across multiple worker processes. For more than one worker/instance you'd
