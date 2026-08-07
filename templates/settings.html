@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Settings — NATRA{% endblock %}
+{% block content %}
+<div class="page page--narrow">
+  <div class="eyebrow">Account</div>
+  <h2>Settings</h2>
+  <form class="card" method="post" action="{{ url_for('users.settings') }}">
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" name="name" value="{{ g.user['name'] }}" required />
+    </div>
+    <div class="field">
+      <label for="avatar_url">Avatar URL (optional)</label>
+      <input id="avatar_url" name="avatar_url" value="{{ g.user['avatar_url'] or '' }}" placeholder="https://..." />
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input value="{{ g.user['email'] }}" disabled />
+    </div>
+    <button class="btn btn--primary" type="submit">Save changes</button>
+  </form>
+</div>
+{% endblock %}

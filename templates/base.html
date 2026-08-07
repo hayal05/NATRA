@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{% block title %}NATRA — remote work, dispatched{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anta&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body data-live-page="{% block live_page %}none{% endblock %}" data-live-id="{% block live_id %}{% endblock %}">
+<div class="layout">
+  <aside class="sidebar">
+    <a class="sidebar__brand" href="{{ url_for('jobs.list_jobs') }}">NATRA</a>
+    <nav class="sidebar__nav">
+      <a class="sidebar__link {{ 'sidebar__link--active' if request.endpoint == 'jobs.list_jobs' else '' }}" href="{{ url_for('jobs.list_jobs') }}">Browse jobs</a>
+      {% if g.user %}
+        <a class="sidebar__link {{ 'sidebar__link--active' if request.endpoint == 'portfolio.view_portfolio' and request.view_args.get('user_id') == g.user['id'] else '' }}" href="{{ url_for('portfolio.view_portfolio', user_id=g.user['id']) }}">Portfolio</a>
+        <a class="sidebar__link {{ 'sidebar__link--active' if request.endpoint == 'jobs.new_job' else '' }}" href="{{ url_for('jobs.new_job') }}">Post a job</a>
+        <a class="sidebar__link {{ 'sidebar__link--active' if request.endpoint == 'users.my_applications' else '' }}" href="{{ url_for('users.my_applications') }}">My applications</a>
+        <a class="sidebar__link {{ 'sidebar__link--active' if request.endpoint == 'users.balance' else '' }}" href="{{ url_for('users.balance') }}">Balance</a>
+        <a class="sidebar__link {{ 'sidebar__link--active' if request.endpoint == 'users.settings' else '' }}" href="{{ url_for('users.settings') }}">Settings</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar__spacer"></div>
+    {% if g.user %}
+      <div class="sidebar__auth">
+        <span class="sidebar__user">{{ g.user['name'] }}</span>
+        <a class="btn btn--ghost" href="{{ url_for('auth.logout') }}">Log out</a>
+      </div>
+    {% else %}
+      <div class="sidebar__auth">
+        <a class="sidebar__link" href="{{ url_for('auth.login') }}">Log in</a>
+        <a class="btn btn--primary" href="{{ url_for('auth.register') }}">Register</a>
+      </div>
+    {% endif %}
+  </aside>
+  <main class="layout__content">
+    <div id="live-toast" class="live-toast" hidden></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="page" style="padding-bottom:0">
+          {% for category, message in messages %}
+            <div class="flash flash--{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <div id="page-content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/live.js') }}"></script>
+</body>
+</html>

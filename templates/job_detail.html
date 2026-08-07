@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ job['title'] }} — NATRA{% endblock %}
+{% block live_page %}job-detail{% endblock %}
+{% block live_id %}{{ job['id'] }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="eyebrow">Dispatch #{{ job['id'][:8] }}</div>
+  <h2 style="margin-bottom:0.2rem">{{ job['title'] }}</h2>
+  <div class="dispatch__meta" style="margin-bottom:1.5rem">
+    <span class="dispatch__price">${{ '%g'|format(job['price']) }}</span>
+    <span class="seal seal--{{ job['status'] }}">{{ job['status'] }}</span>
+    <span class="seal seal--{{ active_status(job) }}">{{ active_status(job) }}</span>
+    <span class="dispatch__postmark">postmarked {{ job['created_at']|postmark }}</span>
+  </div>
+  <p>{{ job['description'] }}</p>
+
+  {% if g.user and not is_owner and job['status'] == 'open' %}
+    {% if my_application %}
+      <span class="seal seal--{{ my_application['status'] }}">application {{ my_application['status'] }}</span>
+    {% else %}
+      <form method="post" action="{{ url_for('jobs.apply', job_id=job['id']) }}">
+        <button class="btn btn--primary" type="submit">Apply for this job</button>
+      </form>
+    {% endif %}
+  {% elif not g.user %}
+    <p class="eyebrow"><a href="{{ url_for('auth.login', next=request.path) }}">Log in</a> to apply.</p>
+  {% endif %}
+
+  {% if is_owner %}
+    <hr class="divider" />
+    <h3>Applicants</h3>
+    {% if applicants %}
+      {% for a in applicants %}
+        <div class="applicant-row">
+          <span><a href="{{ url_for('portfolio.view_portfolio', user_id=a['professional_id']) }}">{{ a['applicant_name'] }}</a></span>
+          <span class="seal seal--{{ a['status'] }}">{{ a['status'] }}</span>
+          {% if a['status'] == 'pending' %}
+            <form method="post" action="{{ url_for('jobs.accept_application', job_id=job['id'], app_id=a['id']) }}" style="margin-left:auto">
+              <button class="btn" type="submit">Accept</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">No applicants yet.</div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

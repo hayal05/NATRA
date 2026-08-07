@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Post a job — NATRA{% endblock %}
+{% block content %}
+<div class="page page--narrow">
+  <div class="eyebrow">New dispatch</div>
+  <h2>Post a remote job</h2>
+  <form class="card" method="post" action="{{ url_for('jobs.new_job') }}">
+    <div class="field">
+      <label for="title">Title</label>
+      <input id="title" name="title" placeholder="Landing page copywriter" required />
+    </div>
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" placeholder="What the work involves"></textarea>
+    </div>
+    <div class="field">
+      <label for="price">Price (USD)</label>
+      <input id="price" name="price" type="number" min="0" step="0.01" placeholder="800" required />
+    </div>
+    <button class="btn btn--primary" type="submit">Post job</button>
+  </form>
+</div>
+{% endblock %}

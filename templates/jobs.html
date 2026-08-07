@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Open remote work — NATRA{% endblock %}
+{% block live_page %}jobs{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="eyebrow">{{ total }} dispatch{{ 'es' if total != 1 else '' }} on the board</div>
+  <h2>Open remote work</h2>
+  <form class="search-bar" method="get" action="{{ url_for('jobs.list_jobs') }}">
+    <input type="search" name="q" placeholder="Search posted jobs…" value="{{ q }}" onchange="this.form.submit()" />
+  </form>
+
+  {% if jobs %}
+    {% for job in jobs %}
+      <a class="dispatch" href="{{ url_for('jobs.job_detail', job_id=job['id']) }}">
+        <div class="dispatch__body">
+          <div class="dispatch__title">{{ job['title'] }}</div>
+          <div class="dispatch__meta">
+            <span class="dispatch__price">${{ '%g'|format(job['price']) }}</span>
+            <span>remote · open to applicants</span>
+            <span class="dispatch__postmark">postmarked {{ job['created_at']|postmark }}</span>
+          </div>
+        </div>
+        <div class="dispatch__seals">
+          <span class="seal seal--{{ job['status'] }}">{{ job['status'] }}</span>
+          <span class="seal seal--{{ active_status(job) }}">{{ active_status(job) }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">{{ "No dispatches match your search." if q else "Nothing posted yet." }}</div>
+  {% endif %}
+</div>
+{% endblock %}

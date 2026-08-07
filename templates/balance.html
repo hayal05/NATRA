@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Balance — NATRA{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="eyebrow">Earnings</div>
+  <h2>${{ '%g'|format(total) }}</h2>
+  <p class="dispatch__postmark" style="margin-bottom:1.5rem">from accepted jobs</p>
+
+  {% if earnings %}
+    {% for e in earnings %}
+      <div class="work-item">
+        <div class="work-item__title">{{ e['title'] }}</div>
+        <span class="dispatch__price">${{ '%g'|format(e['price']) }}</span>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">No accepted jobs yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

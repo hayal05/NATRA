@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}My applications — NATRA{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="eyebrow">Your history</div>
+  <h2>My applications</h2>
+
+  {% if rows %}
+    {% for r in rows %}
+      <a class="dispatch" href="{{ url_for('jobs.job_detail', job_id=r['job_id']) }}">
+        <div class="dispatch__body">
+          <div class="dispatch__title">{{ r['title'] }}</div>
+          <div class="dispatch__meta">
+            <span class="dispatch__price">${{ '%g'|format(r['price']) }}</span>
+            <span>job {{ r['job_status'] }}</span>
+          </div>
+        </div>
+        <div class="dispatch__seals">
+          <span class="seal seal--{{ r['app_status'] }}">{{ r['app_status'] }}</span>
+        </div>
+      </a>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">You haven't applied to anything yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ owner['name'] }}'s portfolio — NATRA{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="eyebrow">Portfolio</div>
+  <h2>{{ owner['name'] }}'s prior work</h2>
+
+  {% if is_owner %}
+    <form class="card" method="post" action="{{ url_for('portfolio.add_item') }}" style="margin-bottom:2rem">
+      <div class="field">
+        <label for="title">Project title</label>
+        <input id="title" name="title" placeholder="Freight tracker MVP" required />
+      </div>
+      <div class="field">
+        <label for="link">Link to work</label>
+        <input id="link" name="link" placeholder="https://..." required />
+      </div>
+      <div class="field">
+        <label for="description">Description (optional)</label>
+        <textarea id="description" name="description"></textarea>
+      </div>
+      <button class="btn btn--primary" type="submit">Add work sample</button>
+    </form>
+  {% endif %}
+
+  {% if items %}
+    {% for item in items %}
+      <div class="work-item">
+        <div class="work-item__title">{{ item['title'] }}</div>
+        <a class="work-item__link" href="{{ item['link'] }}" target="_blank" rel="noopener">{{ item['link'] }}</a>
+        {% if item['description'] %}<p style="margin-bottom:0">{{ item['description'] }}</p>{% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">No work samples added yet.</div>
+  {% endif %}
+</div>
+{% endblock %}
