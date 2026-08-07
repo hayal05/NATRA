@@ -1,37 +1,30 @@
+"""App factory, blueprint registration, Jinja filters.
+
+IMPORTANT: gevent.monkey.patch_all() must run before anything else is
+imported — including os, dotenv, and db. This used to be reversed (db
+imported first, to give the Turso client "real" OS threads before
+patching), on the theory that patching-after-creation would break it with
+"no running event loop". In production (Render, gunicorn +
+GeventWebSocketWorker) that ordering instead produced a *different*,
+confirmed crash: "Error: cannot release un-acquired lock", immediately
+after patch_all() ran — because ssl/aiohttp/threading primitives had
+already been constructed unpatched (via db.py's client, which pulls in
+aiohttp) before patching flipped them over. gevent's own guidance is to
+patch first, before importing anything that might touch ssl/socket/
+threading, so that's what happens here.
+"""
+import gevent.monkey
+
+gevent.monkey.patch_all()
+
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# Create the Turso client (and its background thread + private asyncio
-# event loop) now, BEFORE gevent monkey-patches threading. That background
-# thread must be a genuine OS thread with its own real event loop to work
-# at all — if `threading` is already patched when it's created, the thread
-# becomes a greenlet and every query fails with "RuntimeError: no running
-# event loop" the moment it tries to await anything.
-#
-# Patching *after* this import is what we actually want: it makes the
-# Condition/Future objects created per-request (when a route calls
-# db.execute()) gevent-cooperative, which is what lets that real background
-# thread hand a result back to a waiting greenlet without blocking gevent's
-# whole single-threaded hub (the failure mode we'd get with
-# patch_all(thread=False) instead — LoopExit: "this operation would block
-# forever").
-#
-# NOTE: this ordering only protects the `python app.py` path below. Under
-# the production Start Command (gunicorn + GeventWebSocketWorker), gunicorn's
-# own worker monkey-patches in init_process() BEFORE it ever imports this
-# module, so this import runs too late in that path. gunicorn.conf.py's
-# post_fork() hook is what does the equivalent job for gunicorn — it
-# imports db.py before the worker patches anything. Because Python caches
-# modules, this `import db` is then just a cheap no-op re-import under
-# gunicorn (the client was already built in post_fork), and it's the one
-# doing the real work when you run `python app.py` directly.
 import db
 
-import gevent.monkey
 
-gevent.monkey.patch_all()
 
 from flask import Flask, g
 

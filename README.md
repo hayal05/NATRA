@@ -110,12 +110,6 @@ Render's default health check path is `/`. If you'd rather it hit the
 dedicated `/health` endpoint, set that explicitly in the service's
 Settings → Health Check Path.
 
-`gunicorn.conf.py` (committed at the repo root) is picked up automatically
-by gunicorn — you don't need to reference it in the Start Command. It
-exists to create the Turso client in a `post_fork` hook, before gunicorn's
-gevent worker monkey-patches threading; see the comment in that file and
-in `app.py` for why the ordering matters.
-
 Using a real Turso database means there's no persistent-disk concern like
 there was with SQLite on Render's ephemeral filesystem — the data lives on
 Turso regardless of what happens to the Render instance.
@@ -138,8 +132,17 @@ across multiple worker processes. For more than one worker/instance you'd
 need a message queue backend, e.g. Redis, which Flask-SocketIO supports via
 `message_queue=`.)
 
-`gunicorn.conf.py` in this repo also matters for production — see the next
-section for why.
+**Import order matters.** `app.py` calls `gevent.monkey.patch_all()` as
+the very first thing it does, before importing `os`, `dotenv`, or `db.py`.
+Don't reorder this. An earlier version of this app imported `db.py`
+*before* patching (to give the Turso client's background thread "real" OS
+threads), which seemed reasonable but crashed in production with `Error:
+cannot release un-acquired lock` right after `patch_all()` ran — `ssl` and
+`threading` primitives had already been built unpatched by that point
+(`db.py`'s client pulls in `aiohttp`), and patching out from under them
+left locks in an inconsistent state. gevent's own guidance is the
+simpler rule: patch first, before importing anything that touches
+`ssl`/`socket`/`threading`.
 
 ## Suggested next steps
 1. Add job search/filtering pagination if the board grows.
