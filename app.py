@@ -1,5 +1,12 @@
 import gevent.monkey
-gevent.monkey.patch_all()
+# thread=False: libsql_client's sync wrapper runs its own asyncio event loop
+# on a dedicated background *thread* and dispatches queries into it. If
+# gevent patches `threading` too, that background thread becomes a greenlet
+# instead of a real OS thread, its event loop never gets to run
+# independently, and every query fails with "RuntimeError: no running event
+# loop". Leaving real threading intact avoids that; gevent still patches
+# sockets/ssl/select, which is all Flask-SocketIO's gevent mode needs.
+gevent.monkey.patch_all(thread=False)
 
 import os
 from dotenv import load_dotenv
