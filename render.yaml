@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: remotehub
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+    # NOTE: no persistent disk here — Render's free web services don't support one,
+    # so remotehub.db resets on every restart/redeploy. See README "Deploying" section
+    # for how to add a paid disk (or move to Postgres) once you need real persistence.
